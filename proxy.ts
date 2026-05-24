@@ -5,6 +5,7 @@ import { getSignInPath, getSignUpPath, toRoutePattern } from "@/lib/clerk-routes
 const isPublicRoute = createRouteMatcher([
   toRoutePattern(getSignInPath()),
   toRoutePattern(getSignUpPath()),
+  "/api/projects(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

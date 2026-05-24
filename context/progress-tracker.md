@@ -8,10 +8,15 @@ Update this file after every meaningful implementation change.
 
 ## Current Goal
 
-- Prisma project models, client singleton, migration, and generated client from `context/feature-specs/05-prisma.md` are implemented.
+- Backend project API routes from `context/feature-specs/06-project-apis.md` are implemented.
 
 ## Completed
 
+- Added `GET /api/projects` to list the authenticated user's owned projects.
+- Added `POST /api/projects` to create projects with Clerk `userId` as `ownerId`, defaulting missing names to `Untitled Project`.
+- Added `PATCH /api/projects/[projectId]` to rename owner-owned projects only.
+- Added `DELETE /api/projects/[projectId]` to delete owner-owned projects only.
+- Updated `proxy.ts` so `/api/projects` routes reach their handlers and can return explicit `401` responses for unauthenticated requests.
 - Added Prisma `ProjectStatus`, `Project`, and `ProjectCollaborator` schema definitions in `prisma/models/project.prisma`.
 - Added the first Prisma migration for project and collaborator storage.
 - Generated the Prisma client to the configured `app/generated/prisma` output.
@@ -60,6 +65,9 @@ Update this file after every meaningful implementation change.
 
 ## Architecture Decisions
 
+- Project API handlers use Clerk `auth()` directly for JSON `401` responses instead of `auth.protect()`, because the spec requires unauthenticated API requests to return `401`.
+- Project mutations first load the target project owner and return `403` for existing projects owned by another user.
+- Project creation keeps Prisma's generated ID strategy, then stores the future canvas blob path as `projects/{projectId}/canvas.json`.
 - Prisma schema is split with generator/datasource in `prisma/schema.prisma` and project domain models in `prisma/models/project.prisma`.
 - Prisma client creation reads `DATABASE_URL` once, uses `accelerateUrl` for Prisma Postgres Accelerate URLs, uses `PrismaPg` for direct Postgres URLs, and caches the instance on `globalThis` outside production.
 - Project dialog workflows are local-only mock state inside `useProjectDialogs`; no API calls or persistence were added.
@@ -77,6 +85,8 @@ Update this file after every meaningful implementation change.
 
 ## Session Notes
 
+- Implemented `context/feature-specs/06-project-apis.md`; `npx tsc --noEmit`, `npm run lint`, and `npm run build` passed. The first sandboxed build hit the recurring `.next` unlink permission issue before the elevated rerun passed.
+- Re-read `context/feature-specs/06-project-apis.md`; the spec requires backend-only project REST routes with Clerk owner IDs, `401` unauthenticated responses, `403` non-owner mutation responses, and no UI wiring.
 - Implemented `context/feature-specs/05-prisma.md`; `npx prisma format`, `npx prisma validate`, `npx prisma migrate dev --name add_project_models`, `npx prisma generate`, `npx tsc --noEmit`, `npm run lint`, and `npm run build` passed. Prisma commands needed elevated network access for the engine/database, and the first sandboxed build hit the recurring `.next` unlink permission issue before the elevated rerun passed.
 - Re-read `context/feature-specs/05-prisma.md`; the spec requires project/collaborator models, cached Prisma singleton branching between Accelerate and direct Postgres adapter, migration, generate, and build.
 - Centered the `/editor` home CTA against the viewport below the navbar and set project dialog input text/caret/placeholder colors to dark-theme tokens.
