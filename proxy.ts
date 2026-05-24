@@ -1,0 +1,24 @@
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+
+import { getSignInPath, getSignUpPath, toRoutePattern } from "@/lib/clerk-routes";
+
+const isPublicRoute = createRouteMatcher([
+  toRoutePattern(getSignInPath()),
+  toRoutePattern(getSignUpPath()),
+]);
+
+export default clerkMiddleware(async (auth, request) => {
+  if (!isPublicRoute(request)) {
+    await auth.protect({
+      unauthenticatedUrl: new URL(getSignInPath(), request.url).toString(),
+    });
+  }
+});
+
+export const config = {
+  matcher: [
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
+    "/__clerk/(.*)",
+  ],
+};
