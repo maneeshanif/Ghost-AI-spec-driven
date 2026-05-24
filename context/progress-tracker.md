@@ -8,10 +8,14 @@ Update this file after every meaningful implementation change.
 
 ## Current Goal
 
-- Project dialogs and `/editor` home screen from `context/feature-specs/04-project-dialogs.md` are implemented.
+- Prisma project models, client singleton, migration, and generated client from `context/feature-specs/05-prisma.md` are implemented.
 
 ## Completed
 
+- Added Prisma `ProjectStatus`, `Project`, and `ProjectCollaborator` schema definitions in `prisma/models/project.prisma`.
+- Added the first Prisma migration for project and collaborator storage.
+- Generated the Prisma client to the configured `app/generated/prisma` output.
+- Added `lib/prisma.ts` with a cached Prisma singleton that uses Accelerate for `prisma+postgres://` URLs and `@prisma/adapter-pg` for direct Postgres URLs.
 - Built the `/editor` home screen with the centered heading, description, and New Project CTA.
 - Added a dedicated project dialog hook for mock project data, dialog state, form state, slug preview, and loading state.
 - Added Create Project, Rename Project, and Delete Project dialogs wired through the reusable editor dialog pattern.
@@ -56,6 +60,8 @@ Update this file after every meaningful implementation change.
 
 ## Architecture Decisions
 
+- Prisma schema is split with generator/datasource in `prisma/schema.prisma` and project domain models in `prisma/models/project.prisma`.
+- Prisma client creation reads `DATABASE_URL` once, uses `accelerateUrl` for Prisma Postgres Accelerate URLs, uses `PrismaPg` for direct Postgres URLs, and caches the instance on `globalThis` outside production.
 - Project dialog workflows are local-only mock state inside `useProjectDialogs`; no API calls or persistence were added.
 - The `/editor` page consumes a tiny editor actions context so the layout-owned dialog manager can be triggered from the page CTA without moving sidebar/navbar state out of `EditorShell`.
 - Auth routes are the only public routes in `proxy.ts`; every other route is protected by default with `auth.protect()`.
@@ -71,6 +77,8 @@ Update this file after every meaningful implementation change.
 
 ## Session Notes
 
+- Implemented `context/feature-specs/05-prisma.md`; `npx prisma format`, `npx prisma validate`, `npx prisma migrate dev --name add_project_models`, `npx prisma generate`, `npx tsc --noEmit`, `npm run lint`, and `npm run build` passed. Prisma commands needed elevated network access for the engine/database, and the first sandboxed build hit the recurring `.next` unlink permission issue before the elevated rerun passed.
+- Re-read `context/feature-specs/05-prisma.md`; the spec requires project/collaborator models, cached Prisma singleton branching between Accelerate and direct Postgres adapter, migration, generate, and build.
 - Centered the `/editor` home CTA against the viewport below the navbar and set project dialog input text/caret/placeholder colors to dark-theme tokens.
 - Implemented `context/feature-specs/04-project-dialogs.md`; `npx tsc --noEmit`, `npm run lint`, and `npm run build` passed. The first sandboxed build hit the recurring `.next` unlink permission issue, and the elevated rerun passed.
 - Re-read `context/feature-specs/04-project-dialogs.md`; the spec requires mock project dialogs/sidebar actions only, with no API calls or persistence.
